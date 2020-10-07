@@ -1,3 +1,13 @@
+[3.0.14]
+- Add utils.fuzzyLookup
+- Made eventHelpers more resilient to coding errors in the on = section
+
+[3.0.13]
+- Add utils.osCommand (caption)
+- Improved utils.stringSplit (implicit conversion to number on request)
+- Made log function more resilient when logitem is table with embedded function(s)
+- Improved domoticz.snapshot() to enable snapshot of multiple cameras (in one Email)
+
 [3.0.12]
 - Add option to use device, camera, group, scene and variable objects as parm to deviceExists(), groupExists(), sceneExists(), variableExists(), cameraExists() methods.
 

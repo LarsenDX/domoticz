@@ -389,7 +389,7 @@ bool COpenWeatherMap::ProcessForecast(Json::Value &forecast, const std::string p
 	{
 		try
 		{
-			float rainmm = 0;
+			float rainmm = 9999.00f;
 			float uvi = -999.9f;
 			float mintemp = -999.9f;
 			float maxtemp = -999.9f;
@@ -417,9 +417,11 @@ bool COpenWeatherMap::ProcessForecast(Json::Value &forecast, const std::string p
 
 			//UV Index (only if present)
 			if (!forecast["uvi"].empty())
+			{
 				uvi = forecast["uvi"].asFloat();
+			}
 
-			//Rain (only present if their is rain (or snow))
+			//Rain (only present if there is rain (or snow))
 			if (!forecast["rain"].empty())
 			{
 				if (!forecast["rain"].isObject())
@@ -447,7 +449,7 @@ bool COpenWeatherMap::ProcessForecast(Json::Value &forecast, const std::string p
 			std::stringstream sName;
 
 			sName << "TempHumBaro " << period << " " << (count + 0);
-			SendTempHumBaroSensorFloat(NodeID, 255, maxtemp, humidity, static_cast<float>(barometric), barometric_forecast, sName.str().c_str());
+			SendTempHumBaroSensorFloat(NodeID, 255, maxtemp, humidity, barometric, barometric_forecast, sName.str().c_str());
 
 			NodeID++;;
 			sName.str("");
@@ -468,7 +470,9 @@ bool COpenWeatherMap::ProcessForecast(Json::Value &forecast, const std::string p
 			sName.clear();
 			sName << "Minumum Temperature " << period << " " << (count + 0);
 			if (mintemp != -999.9f)
+			{
 				SendTempSensor(NodeID, 255, mintemp, sName.str().c_str());
+			}
 
 			NodeID++;;
 			sName.str("");
@@ -481,7 +485,9 @@ bool COpenWeatherMap::ProcessForecast(Json::Value &forecast, const std::string p
 			sName.clear();
 			sName << "UV Index " << period << " " << (count + 0);
 			if (uvi != -999.9f)
+			{
 				SendUVSensor(NodeID, 1, 255, uvi, sName.str().c_str());
+			}
 
 			NodeID++;
 			// We do not have visibility forecasts
@@ -493,10 +499,13 @@ bool COpenWeatherMap::ProcessForecast(Json::Value &forecast, const std::string p
 			SendPercentageSensor(NodeID, 1, 255, clouds, sName.str().c_str());
 
 			NodeID++;;
-			sName.str("");
-			sName.clear();
-			sName << "Rain(Snow) " << period << " " << (count + 0);
-			SendRainRateSensor(NodeID, 255, static_cast<float>(rainmm), sName.str().c_str());
+			if ((rainmm != 9999.00f) && (rainmm >= 0.00f))
+			{
+				sName.str("");
+				sName.clear();
+				sName << "Rain(Snow) " << period << " " << (count + 0);
+				SendRainRateSensor(NodeID, 255, rainmm, sName.str().c_str());
+			}
 
 			NodeID++;;
 			sName.str("");
@@ -646,7 +655,7 @@ void COpenWeatherMap::GetMeterDetails()
 	}
 	if ((temp != -999.9f) && (humidity != 0) && (barometric != 0))
 	{
-		SendTempHumBaroSensorFloat(1, 255, temp, humidity, static_cast<float>(barometric), barometric_forecast, "TempHumBaro");
+		SendTempHumBaroSensorFloat(1, 255, temp, humidity, barometric, barometric_forecast, "TempHumBaro");
 	}
 	else if ((temp != -999.9f) && (humidity != 0))
 	{
@@ -683,13 +692,13 @@ void COpenWeatherMap::GetMeterDetails()
 		{
 			wind_degrees = current["wind_deg"].asInt();
 
-			bool bHaveTemp = (temp != -999.9f);
-			float rTemp = (bHaveTemp ? temp : 0);
-			float rFlTemp = rTemp;
+			//we need to assume temp and chill temperatures are availabe to define subtype of wind device. 
+			//It is possible that sometimes in the API a temperature is missing, but it should not change a device type.
+			//Therefor set that temp to 0
+			float wind_temp = (temp != -999.9f ? temp : 0);
+			float wind_chill = (fltemp != -999.9f ? fltemp : 0); //Wind_chill is same as feels like temperature
 
-			if ((rTemp < 10.0) && (windspeed_ms >= 1.4))
-				rFlTemp = 0; //if we send 0 as chill, it will be calculated
-			SendWind(4, 255, wind_degrees, windspeed_ms, windgust_ms, rTemp, rFlTemp, bHaveTemp, true, "Wind");
+			SendWind(4, 255, wind_degrees, windspeed_ms, windgust_ms, wind_temp, wind_chill, true, true, "Wind");
 		}
 	}
 
@@ -720,22 +729,21 @@ void COpenWeatherMap::GetMeterDetails()
 		SendPercentageSensor(7, 1, 255, clouds, "Clouds %");
 	}
 
-	//Rain (only present if their is rain (or snow))
-	float rainmm = 0;
+	//Rain (only present if their is rain)
+	float precipitation = 0;
 	if (!current["rain"].empty() && !current["rain"]["1h"].empty())
 	{
-		float rainmm = static_cast<float>(atof(current["rain"]["1h"].asString().c_str()));
+		precipitation = current["rain"]["1h"].asFloat();
 	}
-	else
-	{	// Maybe it is not raining but snowing... we show this as 'rain' as well (for now at least)
-		if (!current["snow"].empty() && !current["snow"]["1h"].empty())
-		{
-			float rainmm = static_cast<float>(atof(current["snow"]["1h"].asString().c_str()));
-		}
+
+	//Snow (only present if their is snow), add together with rain as precipitation
+	if (!current["snow"].empty() && !current["snow"]["1h"].empty())
+	{
+		precipitation += current["snow"]["1h"].asFloat();
 	}
-	SendRainRateSensor(8, 255, rainmm, "Rain (Snow)");
-	m_itIsRaining = rainmm > 0;
-	SendSwitch(9, 1, 255, m_itIsRaining, 0, "Is it Raining");
+	SendRainRateSensor(8, 255, precipitation, "Precipitation");
+	m_itIsRaining = precipitation > 0;
+	SendSwitch(9, 1, 255, m_itIsRaining, 0, "Is it raining/snowing");
 
 	// Process daily forecast data if available
 	if (root["daily"].empty())
