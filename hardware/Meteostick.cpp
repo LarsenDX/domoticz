@@ -44,11 +44,6 @@ Meteostick::Meteostick(const int ID, const std::string& devname, const unsigned 
 	}
 }
 
-Meteostick::~Meteostick()
-{
-
-}
-
 bool Meteostick::StartHardware()
 {
 	RequestStart();
@@ -126,7 +121,7 @@ void Meteostick::Do_Work()
 		sec_counter++;
 
 		if (sec_counter % 12 == 0) {
-			m_LastHeartbeat = mytime(NULL);
+			m_LastHeartbeat = mytime(nullptr);
 		}
 
 		if (!isOpen())

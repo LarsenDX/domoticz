@@ -81,10 +81,6 @@ m_UserName(Username)
 	Init();
 }
 
-CPhilipsHue::~CPhilipsHue(void)
-{
-}
-
 void CPhilipsHue::Init()
 {
 }
@@ -131,7 +127,7 @@ void CPhilipsHue::Do_Work()
 			sec_counter++;
 			if (sec_counter % m_poll_interval == 0)
 			{
-				m_LastHeartbeat = mytime(NULL);
+				m_LastHeartbeat = mytime(nullptr);
 				GetStates();
 			}
 		}
@@ -336,7 +332,7 @@ bool CPhilipsHue::SwitchLight(const int nodeID, const std::string &LCmd, const i
 	}
 
 	// Update cached state
-	_tHueLightState *pState = NULL;
+	_tHueLightState *pState = nullptr;
 
 	if (nodeID < 1000)
 	{

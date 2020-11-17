@@ -17,13 +17,13 @@ MySensorsMQTT::MySensorsMQTT(
 	const int ID,
 	const std::string &Name,
 	const std::string &IPAddress, const unsigned short usIPPort,
-	const std::string &Username, const std::string &Password, const std::string &CAfilename, const int TLS_Version,
-	const int Topics,
+	const std::string &Username, const std::string &Password, const std::string &CAfilenameExtra, const int TLS_Version,
+	const int PublishScheme,
 	const bool PreventLoop) :
 	MQTT(
 		ID,
 		IPAddress, usIPPort,
-		Username, Password, CAfilename, TLS_Version,
+		Username, Password, CAfilenameExtra, TLS_Version,
 		(int)MQTT::PT_out, (std::string("Domoticz-MySensors") +  std::string(GenerateUUID())).c_str(), PreventLoop),
 	MyTopicIn(TOPIC_IN),
 	MyTopicOut(TOPIC_OUT)
@@ -68,9 +68,9 @@ MySensorsMQTT::MySensorsMQTT(
 		// And remove it from the CAfilename string.
 		m_CAFilename.erase(nextPiece, m_CAFilename.length());
 
-	} while (0);
+	} while (false);
 
-	switch (Topics) {
+	switch (PublishScheme) {
 		case 2:
 			MyTopicIn = CustomTopicIn;
 			MyTopicOut = CustomTopicOut;
@@ -89,10 +89,6 @@ MySensorsMQTT::MySensorsMQTT(
 	m_TopicIn = m_TopicInWithoutHash + "/#";
 	m_TopicOut = MyTopicOut;
 
-}
-
-MySensorsMQTT::~MySensorsMQTT(void)
-{
 }
 
 bool MySensorsMQTT::StartHardware()

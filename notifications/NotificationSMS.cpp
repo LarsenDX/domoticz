@@ -13,9 +13,7 @@ CNotificationSMS::CNotificationSMS() : CNotificationBase(std::string("clickatell
 	SetupConfigBase64(std::string("ClickatellFrom"), _clickatellFrom);
 }
 
-CNotificationSMS::~CNotificationSMS()
-{
-}
+CNotificationSMS::~CNotificationSMS() = default;
 
 bool CNotificationSMS::SendMessageImplementation(
 	const uint64_t Idx,
@@ -50,8 +48,9 @@ bool CNotificationSMS::SendMessageImplementation(
 		StringSplit(thisTo, ";", recipients);
 
 		thisTo = "";
-		for (size_t i = 0; i < recipients.size(); i++) {
-			thisTo = thisTo + "\"" + recipients.at(i) + "\"" + ",";
+		for (auto &recipient : recipients)
+		{
+			thisTo = thisTo + "\"" + recipient + "\"" + ",";
 		}
 
 		if (!thisTo.empty()) {

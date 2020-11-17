@@ -58,10 +58,6 @@ m_bFirstTime(true)
 	Init();
 }
 
-CWunderground::~CWunderground(void)
-{
-}
-
 void CWunderground::Init()
 {
 	m_bFirstTime = true;
@@ -106,7 +102,7 @@ void CWunderground::Do_Work()
 	{
 		sec_counter++;
 		if (sec_counter % 10 == 0) {
-			m_LastHeartbeat=mytime(NULL);
+			m_LastHeartbeat = mytime(nullptr);
 		}
 #ifdef DEBUG_WUNDERGROUNDR
 		if (sec_counter % 10 == 0)
@@ -258,7 +254,7 @@ void CWunderground::GetMeterDetails()
 
 	if (!m_bFirstTime)
 	{
-		time_t tlocal = time(NULL);
+		time_t tlocal = time(nullptr);
 		time_t tobserver = (time_t)root["epoch"].asInt();
 		if (difftime(tlocal, tobserver) >= 1800)
 		{
@@ -394,7 +390,7 @@ void CWunderground::GetMeterDetails()
 		at10-=(tsen.WIND.chillh*256);
 		tsen.WIND.chilll=(BYTE)(at10);
 
-		sDecodeRXMessage(this, (const unsigned char *)&tsen.WIND, NULL, 255);
+		sDecodeRXMessage(this, (const unsigned char *)&tsen.WIND, nullptr, 255);
 	}
 
 	//UV
@@ -452,7 +448,7 @@ void CWunderground::GetMeterDetails()
 				tr10 -= (tsen.RAIN.raintotal2 * 256);
 				tsen.RAIN.raintotal3 = (BYTE)(tr10);
 
-				sDecodeRXMessage(this, (const unsigned char *)&tsen.RAIN, NULL, 255);
+				sDecodeRXMessage(this, (const unsigned char *)&tsen.RAIN, nullptr, 255);
 			}
 		}
 	}
@@ -468,7 +464,7 @@ void CWunderground::GetMeterDetails()
 				_tGeneralDevice gdevice;
 				gdevice.subtype = sTypeVisibility;
 				gdevice.floatval1 = visibility;
-				sDecodeRXMessage(this, (const unsigned char *)&gdevice, NULL, 255);
+				sDecodeRXMessage(this, (const unsigned char *)&gdevice, nullptr, 255);
 			}
 		}
 	}
@@ -482,7 +478,7 @@ void CWunderground::GetMeterDetails()
 			_tGeneralDevice gdevice;
 			gdevice.subtype = sTypeSolarRadiation;
 			gdevice.floatval1 = radiation;
-			sDecodeRXMessage(this, (const unsigned char *)&gdevice, NULL, 255);
+			sDecodeRXMessage(this, (const unsigned char *)&gdevice, nullptr, 255);
 		}
 	}
 }

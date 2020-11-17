@@ -51,10 +51,6 @@ std::string SolarMaxTCP::MakeRequestString()
 	return std::string(szSendRequest);
 }
 
-SolarMaxTCP::~SolarMaxTCP(void)
-{
-}
-
 bool SolarMaxTCP::StartHardware()
 {
 	RequestStart();
@@ -77,7 +73,7 @@ bool SolarMaxTCP::StartHardware()
 	{
 		// change Hostname in serveraddr
 		hostent *he = gethostbyname(m_szIPAddress.c_str());
-		if (he == NULL)
+		if (he == nullptr)
 		{
 			return false;
 		}
@@ -168,7 +164,7 @@ void SolarMaxTCP::Do_Work()
 		sec_counter++;
 
 		if (sec_counter % 12 == 0) {
-			m_LastHeartbeat=mytime(NULL);
+			m_LastHeartbeat = mytime(nullptr);
 		}
 
 		if (m_socket == INVALID_SOCKET)
@@ -296,15 +292,13 @@ void SolarMaxTCP::ParseLine()
 	if (results.size() < 2)
 		return; //invalid data
 
-	std::vector<std::string>::const_iterator itt;
-
 	double kwhCounter = 0;
 	double ActUsage = 0;
 
-	for (itt = results.begin(); itt != results.end(); ++itt)
+	for (const auto &sd : results)
 	{
 		std::vector<std::string> varresults;
-		StringSplit(*itt, "=", varresults);
+		StringSplit(sd, "=", varresults);
 		if (varresults.size() !=2)
 			continue;
 

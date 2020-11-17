@@ -33,10 +33,6 @@ CSBFSpot::CSBFSpot(const int ID, const std::string &SMAConfigFile)
 	Init();
 }
 
-CSBFSpot::~CSBFSpot(void)
-{
-}
-
 void CSBFSpot::Init()
 {
 	m_SBFDataPath="";
@@ -132,7 +128,7 @@ void CSBFSpot::Do_Work()
 	_log.Log(LOG_STATUS,"SBFSpot: Worker started...");
 	while (!IsStopRequested(1000))
 	{
-		time_t atime=mytime(NULL);
+		time_t atime = mytime(nullptr);
 		struct tm ltime;
 		localtime_r(&atime,&ltime);
 		if (((ltime.tm_min/SMA_POLL_INTERVAL!=LastMinute))&&(ltime.tm_sec>20))
@@ -243,7 +239,7 @@ void CSBFSpot::ImportOldMonthData()
 	uint64_t ulID = std::stoull(result[0][0]);
 
 	//Try actual year, and previous year
-	time_t atime = time(NULL);
+	time_t atime = time(nullptr);
 	struct tm ltime;
 	localtime_r(&atime, &ltime);
 
@@ -452,7 +448,7 @@ void CSBFSpot::GetMeterDetails()
 		return;
 	}
 
-	time_t atime = time(NULL);
+	time_t atime = time(nullptr);
 	struct tm ltime;
 	localtime_r(&atime, &ltime);
 
@@ -552,10 +548,9 @@ void CSBFSpot::GetMeterDetails()
 	double Pac = 0;
 	int InvIdx = 0;
 
-	std::vector<std::string>::const_iterator itt;
-	for (itt = szLastLines.begin(); itt != szLastLines.end(); ++itt)
+	for (const auto &line : szLastLines)
 	{
-		StringSplit(*itt, szSeperator, results);
+		StringSplit(line, szSeperator, results);
 
 		if (results[1].size() < 1)
 		{
@@ -651,7 +646,7 @@ namespace http {
 			}
 			int hardwareID = atoi(idx.c_str());
 			CDomoticzHardwareBase *pHardware = m_mainworker.GetHardware(hardwareID);
-			if (pHardware != NULL)
+			if (pHardware != nullptr)
 			{
 				if (pHardware->HwdType == HTYPE_SBFSpot)
 				{

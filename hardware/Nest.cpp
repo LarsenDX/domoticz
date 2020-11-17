@@ -63,10 +63,6 @@ m_Password(CURLEncode::URLEncode(Password))
 	Init();
 }
 
-CNest::~CNest(void)
-{
-}
-
 void CNest::Init()
 {
 	m_AccessToken = "";
@@ -110,7 +106,7 @@ void CNest::Do_Work()
 		sec_counter++;
 		if (sec_counter % 12 == 0)
 		{
-			m_LastHeartbeat = mytime(NULL);
+			m_LastHeartbeat = mytime(nullptr);
 		}
 
 		if (sec_counter % NEST_POLL_INTERVAL == 0)
@@ -307,7 +303,7 @@ void CNest::UpdateSmokeSensor(const unsigned char Idx, const bool bOn, const std
 			bNoChange = true;
 		if (bNoChange)
 		{
-			time_t now = time(0);
+			time_t now = time(nullptr);
 			struct tm ltime;
 			localtime_r(&now, &ltime);
 
@@ -444,14 +440,12 @@ void CNest::GetMeterDetails()
 			std::string devName = devstring;
 			if (!root["where"].empty())
 			{
-				for (Json::Value::iterator itWhere = root["where"].begin(); itWhere != root["where"].end(); ++itWhere)
+				for (auto iwhere : root["where"])
 				{
-					Json::Value iwhere = *itWhere;
 					if (!iwhere["wheres"].empty())
 					{
-						for (Json::Value::iterator itWhereNest = iwhere["wheres"].begin(); itWhereNest != iwhere["wheres"].end(); ++itWhereNest)
+						for (auto iwhereItt : iwhere["wheres"])
 						{
-							Json::Value iwhereItt = *itWhereNest;
 							if (!iwhereItt["where_id"].empty())
 							{
 								std::string tmpWhereid = iwhereItt["where_id"].asString();
@@ -463,7 +457,6 @@ void CNest::GetMeterDetails()
 							}
 						}
 					}
-
 				}
 			}
 			bool bIAlarm = false;
@@ -558,9 +551,9 @@ void CNest::GetMeterDetails()
 		std::string StructureID = ittStructure.key().asString();
 		std::string StructureName = nstructure["name"].asString();
 
-		for (Json::Value::iterator ittDevice = nstructure["devices"].begin(); ittDevice != nstructure["devices"].end(); ++ittDevice)
+		for (auto &ittDevice : nstructure["devices"])
 		{
-			std::string devID = (*ittDevice).asString();
+			std::string devID = ittDevice.asString();
 			if (devID.find("device.")==std::string::npos)
 				continue;
 			std::string Serial = devID.substr(7);
@@ -586,9 +579,8 @@ void CNest::GetMeterDetails()
 				{
 					if (!root["where"][StructureID].empty())
 					{
-						for (Json::Value::iterator ittWheres = root["where"][StructureID]["wheres"].begin(); ittWheres != root["where"][StructureID]["wheres"].end(); ++ittWheres)
+						for (auto nwheres : root["where"][StructureID]["wheres"])
 						{
-							Json::Value nwheres = *ittWheres;
 							if (nwheres["where_id"] == where_id)
 							{
 								Name = StructureName + " " + nwheres["name"].asString();
@@ -725,7 +717,7 @@ bool CNest::SetAway(const unsigned char Idx, const bool bIsAway)
 
 	Json::Value root;
 	root["away"] = bIsAway;
-	root["away_timestamp"] = (int)mytime(NULL);
+	root["away_timestamp"] = (int)mytime(nullptr);
 	root["away_setter"] = 0;
 
 	std::string sResult;

@@ -58,10 +58,6 @@ Yeelight::Yeelight(const int ID)
 	m_bDoRestart = false;
 }
 
-Yeelight::~Yeelight(void)
-{
-}
-
 bool Yeelight::StartHardware()
 {
 	RequestStart();
@@ -105,7 +101,7 @@ void Yeelight::Do_Work()
 		{
 			sec_counter++;
 			if (sec_counter % 12 == 0) {
-				m_LastHeartbeat = mytime(NULL);
+				m_LastHeartbeat = mytime(nullptr);
 			}
 			if (sec_counter % 60 == 0) //poll YeeLights every minute
 			{
@@ -163,7 +159,7 @@ void Yeelight::InsertUpdateSwitch(const std::string &nodeID, const std::string &
 		ycmd.value = value;
 		ycmd.command = cmd;
 		// TODO: Update color
-		m_mainworker.PushAndWaitRxMessage(this, (const unsigned char *)&ycmd, NULL, -1);
+		m_mainworker.PushAndWaitRxMessage(this, (const unsigned char *)&ycmd, nullptr, -1);
 		m_sql.safe_query("UPDATE DeviceStatus SET Name='%q', SwitchType=%d, LastLevel=%d WHERE(HardwareID == %d) AND (DeviceID == '%q')", lightName.c_str(), (STYPE_Dimmer), value, m_HwdID, szDeviceID);
 	}
 	else {
@@ -196,7 +192,7 @@ void Yeelight::InsertUpdateSwitch(const std::string &nodeID, const std::string &
 			ycmd.value = value;
 			ycmd.command = cmd;
 			// TODO: Update color
-			m_mainworker.PushAndWaitRxMessage(this, (const unsigned char *)&ycmd, NULL, -1);
+			m_mainworker.PushAndWaitRxMessage(this, (const unsigned char *)&ycmd, nullptr, -1);
 		}
 	}
 }
@@ -477,7 +473,7 @@ bool YeeLightGetTag(const std::string &InputString, const std::string &Tag, std:
 
 bool Yeelight::udp_server::HandleIncoming(const std::string &szData, std::vector<std::string> &receivedip)
 {
-	std::string receivedString(szData);
+	const std::string &receivedString(szData);
 	//_log.Log(LOG_STATUS, receivedString.c_str());
 #ifdef DEBUG_YeeLightW
 	SaveString2Disk(receivedString, "E:\\YeeLight_receive.txt");
@@ -496,9 +492,10 @@ bool Yeelight::udp_server::HandleIncoming(const std::string &szData, std::vector
 
 	std::string yeelightLocation = dataString.c_str();
 	// check if we have received this ip already
-	size_t i;
-	for (i = 0; i < receivedip.size(); i++) {
-		if (std::strcmp(receivedip[i].c_str(), yeelightLocation.c_str()) == 0) {
+	for (const auto &ip : receivedip)
+	{
+		if (std::strcmp(ip.c_str(), yeelightLocation.c_str()) == 0)
+		{
 			//_log.Log(LOG_STATUS, "Already received: %s", yeelightLocation.c_str());
 			return false;
 		}

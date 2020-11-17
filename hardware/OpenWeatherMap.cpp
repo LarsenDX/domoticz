@@ -67,11 +67,7 @@ COpenWeatherMap::COpenWeatherMap(const int ID, const std::string &APIKey, const 
 	}
 }
 
-COpenWeatherMap::~COpenWeatherMap(void)
-{
-}
-
-bool COpenWeatherMap::ResolveLocation(const std::string& Location, double& latitude, double& longitude, const bool IsCityName)
+bool COpenWeatherMap::ResolveLocation(const std::string& Location, double& latitude, double& longitude, uint32_t& cityid, const bool IsCityName)
 {
 	std::string sResult;
 	std::stringstream sURL;
@@ -118,15 +114,22 @@ bool COpenWeatherMap::ResolveLocation(const std::string& Location, double& latit
 		return false;
 	}
 
-	// Process current
-	if (root["coord"].empty())
+	if (root["cod"].empty() || root["id"].empty() || root["coord"].empty())
 	{
-		Log(LOG_ERROR, "Invalid data received, could not find current weather data!");
+		Log(LOG_ERROR, "Invalid data received, missing relevant fields (cod, id, coord)!");
 		return false;
 	}
 
+	if (root["cod"].asString() != "200")
+	{
+		Log(LOG_ERROR, "Error code received (%s)!", root["cod"].asString().c_str());
+		return false;
+	}
+
+	// Process current
 	latitude = root["coord"]["lat"].asDouble();
 	longitude = root["coord"]["lon"].asDouble();
+	cityid = root["id"].asUInt();
 
 	return true;
 }
@@ -135,6 +138,7 @@ bool COpenWeatherMap::StartHardware()
 {
 	std::string sValue, sLatitude, sLongitude;
 	std::vector<std::string> strarray;
+	uint32_t cityid;
 	Debug(DEBUG_NORM, "Got location parameter %s", m_Location.c_str());
 	Debug(DEBUG_NORM, "Starting with setting %d, %d", m_add_dayforecast, m_add_hourforecast);
 
@@ -185,20 +189,26 @@ bool COpenWeatherMap::StartHardware()
 
 				char* p;
 				double converted = strtod(sLatitude.c_str(), &p);
-				if (*p) {
+				if (*p)
+				{
 					// conversion failed because the input wasn't a number
 					// assume it is a city/country combination
 					Log(LOG_STATUS, "Using specified location (City %s)!", m_Location.c_str());
 					double lat, lon;
-					if (!ResolveLocation(m_Location, lat, lon))
+					if (!ResolveLocation(m_Location, lat, lon, cityid))
 					{
 						Log(LOG_ERROR, "Unable to resolve City to Latitude/Longitude, please use Latitude,Longitude directly in hardware setup!)");
 					}
-					Log(LOG_STATUS, "City -> Lat/Long = %g,%g", lat, lon);
-					m_Lat = lat;
-					m_Lon = lon;
+					else
+					{
+						Log(LOG_STATUS, "City (%d)-> Lat/Long = %g,%g", cityid, lat, lon);
+						m_Lat = lat;
+						m_Lon = lon;
+						m_CityID = cityid;
+					}
 				}
-				else {
+				else
+				{
 					m_Lat = std::stod(sLatitude);
 					m_Lon = std::stod(sLongitude);
 
@@ -230,27 +240,48 @@ bool COpenWeatherMap::StartHardware()
 				char* p;
 				long converted = strtol(m_Location.c_str(), &p, 10);
 				double lat, lon;
-				if (*p) {
+				if (*p)
+				{
 					//City
 					Log(LOG_STATUS, "Using specified location (City %s)!", m_Location.c_str());
-					if (!ResolveLocation(m_Location, lat, lon))
+					if (!ResolveLocation(m_Location, lat, lon, cityid))
 					{
 						Log(LOG_ERROR, "Unable to resolve City to Latitude/Longitude, please use Latitude,Longitude directly in hardware setup!)");
 					}
+					else
+					{
+						Log(LOG_STATUS, "City (%d)-> Lat/Long = %g,%g", cityid, lat, lon);
+						m_Lat = lat;
+						m_Lon = lon;
+						m_CityID = cityid;
+					}
 				}
-				else {
+				else
+				{
 					//Station ID
 					Log(LOG_STATUS, "Using specified location (Station ID %s)!", m_Location.c_str());
-					if (!ResolveLocation(m_Location, lat, lon, false))
+					if (!ResolveLocation(m_Location, lat, lon, cityid, false))
 					{
 						Log(LOG_ERROR, "Unable to resolve City to Latitude/Longitude, please use Latitude,Longitude directly in hardware setup!)");
 					}
+					else
+					{
+						Log(LOG_STATUS, "City (%d)-> Lat/Long = %g,%g", cityid, lat, lon);
+						m_Lat = lat;
+						m_Lon = lon;
+						m_CityID = cityid;
+					}
 				}
-				Log(LOG_STATUS, "City -> Lat/Long = %g,%g", lat, lon);
-				m_Lat = lat;
-				m_Lon = lon;
 			}
 		}
+	}
+
+	//Forecast URL
+	if (m_CityID > 0)
+	{
+		std::stringstream ss;
+		ss << OWM_forecast_URL << m_CityID;
+		m_ForecastURL = ss.str();
 	}
 
 	RequestStart();
@@ -284,7 +315,7 @@ void COpenWeatherMap::Do_Work()
 	{
 		sec_counter++;
 		if (sec_counter % 12 == 0) {
-			m_LastHeartbeat = mytime(NULL);
+			m_LastHeartbeat = mytime(nullptr);
 		}
 		if (sec_counter % OpenWeatherMap_Poll_Interval == 0)
 		{
@@ -311,11 +342,26 @@ std::string COpenWeatherMap::GetForecastURL()
 	return m_ForecastURL;
 }
 
+Json::Value COpenWeatherMap::GetForecastData()
+{
+	Json::Value root;
+
+	root["url"] = m_ForecastURL;
+	root["location"] = m_Location;
+	root["lat"] = m_Lat;
+	root["lon"] = m_Lon;
+	root["appid"] = m_APIKey;
+	root["cityid"] = m_CityID;
+
+	Debug(DEBUG_NORM, "GetForecastData: \n%s", root.toStyledString().c_str());
+	return root;
+}
+
 std::string COpenWeatherMap::GetHourFromUTCtimestamp(const uint8_t hournr, std::string UTCtimestamp)
 {
 	std::string sHour = "Unknown";
 
-	time_t t = (time_t) strtol(UTCtimestamp.c_str(),NULL,10);
+	time_t t = (time_t)strtol(UTCtimestamp.c_str(), nullptr, 10);
 	std::string sDate = ctime(&t);
 
 	std::vector<std::string> strarray;
@@ -347,7 +393,7 @@ std::string COpenWeatherMap::GetDayFromUTCtimestamp(const uint8_t daynr, std::st
 {
 	std::string sDay = "Unknown";
 
-	time_t t = (time_t) strtol(UTCtimestamp.c_str(),NULL,10);
+	time_t t = (time_t)strtol(UTCtimestamp.c_str(), nullptr, 10);
 	std::string sDate = ctime(&t);
 
 	std::vector<std::string> strarray;
@@ -818,11 +864,4 @@ void COpenWeatherMap::GetMeterDetails()
 		while (!hourlyfc[iHour].empty());
 		Debug(DEBUG_NORM, "Processed %d hourly forecasts",iHour);
 	}
-
-	//Forecast URL
-	if (!root["lat"].empty())
-	{
-		m_ForecastURL = "https://openweathermap.org";// OWM_forecast_URL + root["lat"].asString();
-	}
-
 }

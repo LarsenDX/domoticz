@@ -46,7 +46,7 @@
   * Initialize Client Socket To Set Free / Invalid at the start of program
   * Preconditions none, Perform once on start of application
   */
-void eHouseTCP::EhouseInitTcpClient(void)
+void eHouseTCP::EhouseInitTcpClient()
 {
 	unsigned char i = 0;
 	for (i = 0; i < MAX_CLIENT_SOCKETS; i++)
@@ -171,7 +171,7 @@ void eHouseTCP::performTCPClientThreads()
 			{
 				EhouseTcpClientThread[i]->try_join_for()
 					join();
-				//EhouseTcpClientThread[i] = NULL;
+				//EhouseTcpClientThread[i] = nullptr;
 			}*/
 			m_TC[i].NotFinished = 0;
 			m_TC[i].Socket = -1;

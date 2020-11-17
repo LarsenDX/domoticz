@@ -152,12 +152,6 @@ RelayNet::RelayNet(const int ID, const std::string &IPAddress, const unsigned sh
 
 //===========================================================================
 
-RelayNet::~RelayNet(void)
-{
-}
-
-//===========================================================================
-
 bool RelayNet::StartHardware()
 {
 	RequestStart();
@@ -232,7 +226,7 @@ void RelayNet::Do_Work()
 		/*  Heartbeat maintenance  */
 		if (sec_counter  % 10 == 0)
 		{
-			m_LastHeartbeat = mytime(NULL);
+			m_LastHeartbeat = mytime(nullptr);
 		}
 
 		/*  Prevent disconnect request by Relay Module  */

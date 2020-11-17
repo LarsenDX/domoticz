@@ -78,11 +78,7 @@ namespace Plugins {
 		m_bEnabled = false;
 		m_bAllPluginsStarted = false;
 		m_iPollInterval = 10;
-		m_InitialPythonThread = NULL;
-	}
-
-	CPluginSystem::~CPluginSystem(void)
-	{
+		m_InitialPythonThread = nullptr;
 	}
 
 	bool CPluginSystem::StartPluginSystem()
@@ -201,16 +197,16 @@ namespace Plugins {
 	void CPluginSystem::LoadSettings()
 	{
 		//	Add command to message queue for every plugin
-		for (std::map<int, CDomoticzHardwareBase*>::iterator itt = m_pPlugins.begin(); itt != m_pPlugins.end(); ++itt)
+		for (const auto &plugin : m_pPlugins)
 		{
-			if (itt->second)
+			if (plugin.second)
 			{
-				CPlugin*	pPlugin = reinterpret_cast<CPlugin*>(itt->second);
+				auto pPlugin = reinterpret_cast<CPlugin *>(plugin.second);
 				pPlugin->MessagePlugin(new SettingsDirective(pPlugin));
 			}
 			else
 			{
-				_log.Log(LOG_ERROR, "%s: NULL entry found in Plugins map for Hardware %d.", __func__, itt->first);
+				_log.Log(LOG_ERROR, "%s: NULL entry found in Plugins map for Hardware %d.", __func__, plugin.first);
 			}
 		}
 	}
@@ -237,24 +233,24 @@ namespace Plugins {
 		std::string plugin_Dir, plugin_File;
 
 		DirectoryListing(DirEntries, plugin_BaseDir, true, false);
-		for (itt_Dir = DirEntries.begin(); itt_Dir != DirEntries.end(); ++itt_Dir)
+		for (const auto &dir : DirEntries)
 		{
-			if (*itt_Dir != "examples")
+			if (dir != "examples")
 			{
 #ifdef WIN32
-				plugin_Dir = plugin_BaseDir + *itt_Dir + "\\";
+				plugin_Dir = plugin_BaseDir + dir + "\\";
 #else
-				plugin_Dir = plugin_BaseDir + *itt_Dir + "/";
+				plugin_Dir = plugin_BaseDir + dir + "/";
 #endif
 				DirectoryListing(FileEntries, plugin_Dir, false, true);
-				for (itt_File = FileEntries.begin(); itt_File != FileEntries.end(); ++itt_File)
+				for (const auto &file : FileEntries)
 				{
-					if (*itt_File == "plugin.py")
+					if (file == "plugin.py")
 					{
 						try
 						{
 							std::string sXML;
-							plugin_File = plugin_Dir + *itt_File;
+							plugin_File = plugin_Dir + file;
 							std::string line;
 							std::ifstream readFile(plugin_File.c_str());
 							bool bFound = false;
@@ -282,7 +278,7 @@ namespace Plugins {
 
 	CDomoticzHardwareBase* CPluginSystem::RegisterPlugin(const int HwdID, const std::string & Name, const std::string & PluginKey)
 	{
-		CPlugin*	pPlugin = NULL;
+		CPlugin *pPlugin = nullptr;
 		if (m_bEnabled)
 		{
 			std::lock_guard<std::mutex> l(PluginMutex);
@@ -333,11 +329,11 @@ namespace Plugins {
 
 		while (!IsStopRequested(50))
 		{
-			time_t	Now = time(0);
+			time_t Now = time(nullptr);
 			bool	bProcessed = true;
 			while (bProcessed)
 			{
-				CPluginMessageBase* Message = NULL;
+				CPluginMessageBase *Message = nullptr;
 				bProcessed = false;
 
 				// Cycle once through the queue looking for the 1st message that is ready to process
@@ -422,13 +418,17 @@ namespace http {
 			int		iPluginCnt = root.size();
 			Plugins::CPluginSystem Plugins;
 			std::map<std::string, std::string>*	PluginXml = Plugins.GetManifest();
-			for (std::map<std::string, std::string>::iterator it_type = PluginXml->begin(); it_type != PluginXml->end(); ++it_type)
+			for (const auto &type : *PluginXml)
 			{
 				TiXmlDocument	XmlDoc;
-				XmlDoc.Parse(it_type->second.c_str());
+				XmlDoc.Parse(type.second.c_str());
 				if (XmlDoc.Error())
 				{
-					_log.Log(LOG_ERROR, "%s: Parsing '%s', '%s' at line %d column %d in XML '%s'.", __func__, it_type->first.c_str(), XmlDoc.ErrorDesc(), XmlDoc.ErrorRow(), XmlDoc.ErrorCol(), it_type->second.c_str());
+					_log.Log(LOG_ERROR,
+						 "%s: Parsing '%s', '%s' at line %d column %d in "
+						 "XML '%s'.",
+						 __func__, type.first.c_str(), XmlDoc.ErrorDesc(), XmlDoc.ErrorRow(), XmlDoc.ErrorCol(),
+						 type.second.c_str());
 				}
 				else
 				{
@@ -515,7 +515,7 @@ namespace http {
 			Plugins::CPluginSystem Plugins;
 			std::map<int, CDomoticzHardwareBase*>*	PluginHwd = Plugins.GetHardware();
 			std::string		sRetVal = Hardware_Type_Desc(HTYPE_PythonPlugin);
-			Plugins::CPlugin*	pPlugin = NULL;
+			Plugins::CPlugin *pPlugin = nullptr;
 
 			// Disabled plugins will not be in plugin hardware map
 			if (PluginHwd->count(HwdID))
@@ -527,15 +527,19 @@ namespace http {
 			{
 				std::string	sKey = "key=\"" + pPlugin->m_PluginKey + "\"";
 				std::map<std::string, std::string>*	PluginXml = Plugins.GetManifest();
-				for (std::map<std::string, std::string>::iterator it_type = PluginXml->begin(); it_type != PluginXml->end(); ++it_type)
+				for (const auto &type : *PluginXml)
 				{
-					if (it_type->second.find(sKey) != std::string::npos)
+					if (type.second.find(sKey) != std::string::npos)
 					{
 						TiXmlDocument	XmlDoc;
-						XmlDoc.Parse(it_type->second.c_str());
+						XmlDoc.Parse(type.second.c_str());
 						if (XmlDoc.Error())
 						{
-							_log.Log(LOG_ERROR, "%s: Error '%s' at line %d column %d in XML '%s'.", __func__, XmlDoc.ErrorDesc(), XmlDoc.ErrorRow(), XmlDoc.ErrorCol(), it_type->second.c_str());
+							_log.Log(LOG_ERROR,
+								 "%s: Error '%s' at line %d column "
+								 "%d in XML '%s'.",
+								 __func__, XmlDoc.ErrorDesc(), XmlDoc.ErrorRow(), XmlDoc.ErrorCol(),
+								 type.second.c_str());
 						}
 						else
 						{

@@ -31,7 +31,7 @@ void CKodiNode::CKodiStatus::Clear()
 	m_sPercent = "";
 	m_sYear = "";
 	m_sLive = "";
-	m_tLastOK = mytime(NULL);
+	m_tLastOK = mytime(nullptr);
 }
 
 std::string	CKodiNode::CKodiStatus::LogMessage()
@@ -161,7 +161,7 @@ CKodiNode::CKodiNode(boost::asio::io_service *pIos, const int pHwdID, const int 
 	m_iPollIntSec = PollIntervalsec;
 	m_iMissedPongs = 0;
 
-	m_Socket = NULL;
+	m_Socket = nullptr;
 
 	_log.Debug(DEBUG_HARDWARE, "Kodi: (%s) Created.", m_Name.c_str());
 
@@ -176,7 +176,7 @@ CKodiNode::CKodiNode(boost::asio::io_service *pIos, const int pHwdID, const int 
 	m_CurrentStatus = m_PreviousStatus;
 }
 
-CKodiNode::~CKodiNode(void)
+CKodiNode::~CKodiNode()
 {
 	handleDisconnect();
 	_log.Debug(DEBUG_HARDWARE, "Kodi: (%s) Destroyed.", m_Name.c_str());
@@ -526,7 +526,7 @@ void CKodiNode::UpdateStatus()
 	//This has to be rebuild! No direct poking in the database, please use CMainWorker::UpdateDevice
 
 	std::vector<std::vector<std::string> > result;
-	m_CurrentStatus.LastOK(mytime(NULL));
+	m_CurrentStatus.LastOK(mytime(nullptr));
 
 	// 1:	Update the DeviceStatus
 	if (m_CurrentStatus.UpdateRequired(m_PreviousStatus))
@@ -605,7 +605,7 @@ void CKodiNode::handleConnect()
 					_log.Debug(DEBUG_HARDWARE, "Kodi: (%s) Connect to '%s:%s' failed: (%d) %s", m_Name.c_str(), m_IP.c_str(), (m_Port[0] != '-' ? m_Port.c_str() : m_Port.substr(1).c_str()), ec.value(), ec.message().c_str());
 				}
 				delete m_Socket;
-				m_Socket = NULL;
+				m_Socket = nullptr;
 				m_CurrentStatus.Clear();
 				m_CurrentStatus.Status(MSTAT_OFF);
 				UpdateStatus();
@@ -679,7 +679,7 @@ void CKodiNode::handleWrite(std::string pMessage)
 		}
 		else
     {
-      _log.Log(LOG_ERROR, "Kodi: (%s) Data not sent to NULL socket: '%s'", m_Name.c_str(), pMessage.c_str());
+	    _log.Log(LOG_ERROR, "Kodi: (%s) Data not sent to nullptr socket: '%s'", m_Name.c_str(), pMessage.c_str());
     }
   }
 }
@@ -693,7 +693,7 @@ void CKodiNode::handleDisconnect()
 		m_Socket->shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
 		m_Socket->close();
 		delete m_Socket;
-		m_Socket = NULL;
+		m_Socket = nullptr;
 	}
 }
 
@@ -746,7 +746,7 @@ void CKodiNode::Do_Work()
 	_log.Log(LOG_NORM, "Kodi: (%s) Exiting work loop.", m_Name.c_str());
 	m_Busy = false;
 	delete m_Socket;
-	m_Socket = NULL;
+	m_Socket = nullptr;
 }
 
 void CKodiNode::SendCommand(const std::string &command)
@@ -789,7 +789,7 @@ void CKodiNode::SendCommand(const std::string &command)
 		if (sKodiParam.length()) sMessage += "\"action\":\"" + sKodiParam + "\"";
 		sMessage += "},\"id\":1006}";
 
-		if (m_Socket != NULL)
+		if (m_Socket != nullptr)
 		{
 			handleWrite(sMessage);
 			_log.Log(LOG_NORM, "Kodi: (%s) Sent command: '%s %s'.", m_Name.c_str(), sKodiCall.c_str(), sKodiParam.c_str());
@@ -843,7 +843,7 @@ void CKodiNode::SendCommand(const std::string &command, const int iValue)
 
 	if (sMessage.length())
 	{
-		if (m_Socket != NULL)
+		if (m_Socket != nullptr)
 		{
 			handleWrite(sMessage);
 			_log.Log(LOG_NORM, "Kodi: (%s) Sent command: '%s'.", m_Name.c_str(), sKodiCall.c_str());
@@ -901,7 +901,7 @@ CKodi::CKodi(const int ID)
 	SetSettings(10, 3000);
 }
 
-CKodi::~CKodi(void)
+CKodi::~CKodi()
 {
 	m_bIsStarted = false;
 }
@@ -960,17 +960,17 @@ void CKodi::Do_Work()
 
 			scounter = 0;
 			bool bWorkToDo = false;
-			std::vector<std::shared_ptr<CKodiNode> >::iterator itt;
-			for (itt = m_pNodes.begin(); itt != m_pNodes.end(); ++itt)
+			for (const auto &node : m_pNodes)
 			{
-				if (!(*itt)->IsBusy())
+				if (!node->IsBusy())
 				{
-					_log.Log(LOG_NORM, "Kodi: (%s) - Restarting thread.", (*itt)->m_Name.c_str());
-					boost::thread* tAsync = new boost::thread(&CKodiNode::Do_Work, (*itt));
+					_log.Log(LOG_NORM, "Kodi: (%s) - Restarting thread.", node->m_Name.c_str());
+					boost::thread *tAsync = new boost::thread(&CKodiNode::Do_Work, node);
 					SetThreadName(tAsync->native_handle(), "KodiNode");
 					m_ios.stop();
 				}
-				if ((*itt)->IsOn()) bWorkToDo = true;
+				if (node->IsOn())
+					bWorkToDo = true;
 			}
 
 			if (bWorkToDo && m_ios.stopped())  // make sure that there is a boost thread to service i/o operations
@@ -1012,45 +1012,45 @@ bool CKodi::WriteToHardware(const char *pdata, const unsigned char /*length*/)
 
 	long	DevID = (pSen->LIGHTING2.id3 << 8) | pSen->LIGHTING2.id4;
 
-	std::vector<std::shared_ptr<CKodiNode> >::iterator itt;
-	for (itt = m_pNodes.begin(); itt != m_pNodes.end(); ++itt)
+	for (const auto &node : m_pNodes)
 	{
-		if ((*itt)->m_DevID == DevID)
+		if (node->m_DevID == DevID)
 		{
-			if ((*itt)->IsOn()) {
+			if (node->IsOn())
+			{
 				int iParam = pSen->LIGHTING2.level;
 				switch (pSen->LIGHTING2.cmnd)
 				{
 				case light2_sOff:
 				case light2_sGroupOff:
-					return (*itt)->SendShutdown();
+					return node->SendShutdown();
 				case gswitch_sStop:
-					(*itt)->SendCommand("stop");
+					node->SendCommand("stop");
 					return true;
 				case gswitch_sPlay:
-					(*itt)->SendCommand("play");
+					node->SendCommand("play");
 					return true;
 				case gswitch_sPause:
-					(*itt)->SendCommand("pause");
+					node->SendCommand("pause");
 					return true;
 				case gswitch_sSetVolume:
-					(*itt)->SendCommand("setvolume", iParam);
+					node->SendCommand("setvolume", iParam);
 					return true;
 				case gswitch_sPlayPlaylist:
-					(*itt)->SendCommand("playlist", iParam);
+					node->SendCommand("playlist", iParam);
 					return true;
 				case gswitch_sPlayFavorites:
-					(*itt)->SendCommand("favorites", iParam);
+					node->SendCommand("favorites", iParam);
 					return true;
 				case gswitch_sExecute:
-					(*itt)->SendCommand("execute", iParam);
+					node->SendCommand("execute", iParam);
 					return true;
 				default:
 					return true;
 				}
 			}
 			else
-				_log.Log(LOG_NORM, "Kodi: (%s) Command not sent, Device is 'Off'.", (*itt)->m_Name.c_str());
+				_log.Log(LOG_NORM, "Kodi: (%s) Command not sent, Device is 'Off'.", node->m_Name.c_str());
 		}
 	}
 
@@ -1139,17 +1139,17 @@ void CKodi::ReloadNodes()
 		std::lock_guard<std::mutex> l(m_mutex);
 
 		// create a vector to hold the nodes
-		for (std::vector<std::vector<std::string> >::const_iterator itt = result.begin(); itt != result.end(); ++itt)
+		for (auto sd : result)
 		{
-			std::vector<std::string> sd = *itt;
-			std::shared_ptr<CKodiNode>	pNode = (std::shared_ptr<CKodiNode>) new CKodiNode(&m_ios, m_HwdID, m_iPollInterval, m_iPingTimeoutms, sd[0], sd[1], sd[2], sd[3]);
+			std::shared_ptr<CKodiNode> pNode = (std::shared_ptr<CKodiNode>)new CKodiNode(
+				&m_ios, m_HwdID, m_iPollInterval, m_iPingTimeoutms, sd[0], sd[1], sd[2], sd[3]);
 			m_pNodes.push_back(pNode);
 		}
 		// start the threads to control each kodi
-		for (std::vector<std::shared_ptr<CKodiNode> >::iterator itt = m_pNodes.begin(); itt != m_pNodes.end(); ++itt)
+		for (auto &m_pNode : m_pNodes)
 		{
-			_log.Log(LOG_NORM, "Kodi: (%s) Starting thread.", (*itt)->m_Name.c_str());
-			boost::thread* tAsync = new boost::thread(&CKodiNode::Do_Work, (*itt));
+			_log.Log(LOG_NORM, "Kodi: (%s) Starting thread.", m_pNode->m_Name.c_str());
+			boost::thread *tAsync = new boost::thread(&CKodiNode::Do_Work, m_pNode);
 			SetThreadName(tAsync->native_handle(), "KodiNode");
 		}
 		sleep_milliseconds(100);
@@ -1168,8 +1168,7 @@ void CKodi::UnloadNodes()
 
 	while (((!m_pNodes.empty()) || (!m_ios.stopped())))
 	{
-		std::vector<std::shared_ptr<CKodiNode> >::iterator itt;
-		for (itt = m_pNodes.begin(); itt != m_pNodes.end(); ++itt)
+		for (auto itt = m_pNodes.begin(); itt != m_pNodes.end(); ++itt)
 		{
 			(*itt)->StopRequest();
 			if (!(*itt)->IsBusy())
@@ -1186,12 +1185,11 @@ void CKodi::UnloadNodes()
 
 void CKodi::SendCommand(const int ID, const std::string &command)
 {
-	std::vector<std::shared_ptr<CKodiNode> >::iterator itt;
-	for (itt = m_pNodes.begin(); itt != m_pNodes.end(); ++itt)
+	for (const auto &node : m_pNodes)
 	{
-		if ((*itt)->m_ID == ID)
+		if (node->m_ID == ID)
 		{
-			(*itt)->SendCommand(command);
+			node->SendCommand(command);
 			return;
 		}
 	}
@@ -1201,12 +1199,11 @@ void CKodi::SendCommand(const int ID, const std::string &command)
 
 bool CKodi::SetPlaylist(const int ID, const std::string &playlist)
 {
-	std::vector<std::shared_ptr<CKodiNode> >::iterator itt;
-	for (itt = m_pNodes.begin(); itt != m_pNodes.end(); ++itt)
+	for (const auto &node : m_pNodes)
 	{
-		if ((*itt)->m_ID == ID)
+		if (node->m_ID == ID)
 		{
-			(*itt)->SetPlaylist(playlist);
+			node->SetPlaylist(playlist);
 			return true;
 		}
 	}
@@ -1215,12 +1212,11 @@ bool CKodi::SetPlaylist(const int ID, const std::string &playlist)
 
 bool CKodi::SetExecuteCommand(const int ID, const std::string &command)
 {
-	std::vector<std::shared_ptr<CKodiNode> >::iterator itt;
-	for (itt = m_pNodes.begin(); itt != m_pNodes.end(); ++itt)
+	for (const auto &node : m_pNodes)
 	{
-		if ((*itt)->m_ID == ID)
+		if (node->m_ID == ID)
 		{
-			(*itt)->SetExecuteCommand(command);
+			node->SetExecuteCommand(command);
 			return true;
 		}
 	}
@@ -1242,7 +1238,7 @@ namespace http {
 				return;
 			int iHardwareID = atoi(hwid.c_str());
 			CDomoticzHardwareBase *pHardware = m_mainworker.GetHardware(iHardwareID);
-			if (pHardware == NULL)
+			if (pHardware == nullptr)
 				return;
 			if (pHardware->HwdType != HTYPE_Kodi)
 				return;
@@ -1254,12 +1250,9 @@ namespace http {
 			result = m_sql.safe_query("SELECT ID,Name,MacAddress,Timeout FROM WOLNodes WHERE (HardwareID==%d)", iHardwareID);
 			if (!result.empty())
 			{
-				std::vector<std::vector<std::string> >::const_iterator itt;
 				int ii = 0;
-				for (itt = result.begin(); itt != result.end(); ++itt)
+				for (const auto &sd : result)
 				{
-					std::vector<std::string> sd = *itt;
-
 					root["result"][ii]["idx"] = sd[0];
 					root["result"][ii]["Name"] = sd[1];
 					root["result"][ii]["IP"] = sd[2];
@@ -1287,7 +1280,7 @@ namespace http {
 				return;
 			int iHardwareID = atoi(hwid.c_str());
 			CDomoticzHardwareBase *pBaseHardware = m_mainworker.GetHardware(iHardwareID);
-			if (pBaseHardware == NULL)
+			if (pBaseHardware == nullptr)
 				return;
 			if (pBaseHardware->HwdType != HTYPE_Kodi)
 				return;
@@ -1325,7 +1318,7 @@ namespace http {
 				return;
 			int iHardwareID = atoi(hwid.c_str());
 			CDomoticzHardwareBase *pBaseHardware = m_mainworker.GetHardware(iHardwareID);
-			if (pBaseHardware == NULL)
+			if (pBaseHardware == nullptr)
 				return;
 			if (pBaseHardware->HwdType != HTYPE_Kodi)
 				return;
@@ -1359,7 +1352,7 @@ namespace http {
 				return;
 			int iHardwareID = atoi(hwid.c_str());
 			CDomoticzHardwareBase *pBaseHardware = m_mainworker.GetHardware(iHardwareID);
-			if (pBaseHardware == NULL)
+			if (pBaseHardware == nullptr)
 				return;
 			if (pBaseHardware->HwdType != HTYPE_Kodi)
 				return;
@@ -1388,7 +1381,7 @@ namespace http {
 				return;
 			int iHardwareID = atoi(hwid.c_str());
 			CDomoticzHardwareBase *pBaseHardware = m_mainworker.GetHardware(iHardwareID);
-			if (pBaseHardware == NULL)
+			if (pBaseHardware == nullptr)
 				return;
 			if (pBaseHardware->HwdType != HTYPE_Kodi)
 				return;
@@ -1413,7 +1406,7 @@ namespace http {
 				return;
 			int iHardwareID = atoi(hwid.c_str());
 			CDomoticzHardwareBase *pBaseHardware = m_mainworker.GetHardware(iHardwareID);
-			if (pBaseHardware == NULL)
+			if (pBaseHardware == nullptr)
 				return;
 			if (pBaseHardware->HwdType != HTYPE_Kodi)
 				return;

@@ -19,11 +19,6 @@ P1MeterTCP::P1MeterTCP(const int ID, const std::string &IPAddress, const unsigne
 	}
 }
 
-P1MeterTCP::~P1MeterTCP(void)
-{
-}
-
-
 bool P1MeterTCP::StartHardware()
 {
 	RequestStart();
@@ -60,7 +55,7 @@ void P1MeterTCP::Do_Work()
 		sec_counter++;
 
 		if (sec_counter % 12 == 0) {
-			m_LastHeartbeat = mytime(NULL);
+			m_LastHeartbeat = mytime(nullptr);
 		}
 	}
 	terminate();

@@ -41,17 +41,16 @@ namespace http {
 		@param[in] server_settings  Server settings (IP address, listening port, ssl options...)
 		@param[in] doc_root path to folder containing html e.g. "./"
 		*/
-		cWebem::cWebem(
-			const server_settings & settings,
-			const std::string& doc_root) :
-			m_io_service(),
-			m_settings(settings),
-			m_authmethod(AUTH_LOGIN),
-			mySessionStore(NULL),
-			myRequestHandler(doc_root, this),
-			m_DigistRealm("Domoticz.com"),
-			m_session_clean_timer(m_io_service, boost::posix_time::minutes(1)),
-			m_sessions(), // Rene, make sure we initialize m_sessions first, before starting a server
+		cWebem::cWebem(const server_settings &settings, const std::string &doc_root)
+			: m_io_service()
+			, m_settings(settings)
+			, m_authmethod(AUTH_LOGIN)
+			, mySessionStore(nullptr)
+			, myRequestHandler(doc_root, this)
+			, m_DigistRealm("Domoticz.com")
+			, m_session_clean_timer(m_io_service, boost::posix_time::minutes(1))
+			, m_sessions()
+			, // Rene, make sure we initialize m_sessions first, before starting a server
 			myServer(server_factory::create(settings, myRequestHandler))
 		{
 			// associate handler to timer and schedule the first iteration
@@ -63,7 +62,7 @@ namespace http {
 		cWebem::~cWebem()
 		{
 			// Remove reference to CWebServer before its deletion (fix a "pure virtual method called" exception on server termination)
-			mySessionStore = NULL;
+			mySessionStore = nullptr;
 			// Delete server (no need with smart pointer)
 		}
 
@@ -79,7 +78,7 @@ namespace http {
 		void cWebem::Run()
 		{
 			// Start Web server
-			if (myServer != NULL)
+			if (myServer != nullptr)
 			{
 				myServer->run();
 			}
@@ -112,7 +111,7 @@ namespace http {
 				_log.Log(LOG_ERROR, "[web:%s] exception thrown while stopping session cleaner", GetPort().c_str());
 			}
 			// Stop Web server
-			if (myServer != NULL)
+			if (myServer != nullptr)
 			{
 				myServer->stop();
 			}
@@ -225,7 +224,7 @@ namespace http {
 		{
 			bool res = false;
 			size_t p = 0;
-			while (1)
+			while (true)
 			{
 				// find next request for generated text
 				p = reply.find("<!--#embed", p);
@@ -349,7 +348,7 @@ namespace http {
 				const char *pContent_Type = request::get_req_header(&req, "Content-Type");
 				if (pContent_Type)
 				{
-					if (strstr(pContent_Type, "multipart/form-data") != NULL)
+					if (strstr(pContent_Type, "multipart/form-data") != nullptr)
 					{
 						std::string szContent = req.content;
 						size_t pos;
@@ -442,11 +441,9 @@ namespace http {
 						}
 						return true;
 					}
-					else if (
-						(strstr(pContent_Type, "text/plain") != NULL)
-						|| (strstr(pContent_Type, "application/json") != NULL)
-						|| (strstr(pContent_Type, "application/xml") != NULL)
-						)
+					else if ((strstr(pContent_Type, "text/plain") != nullptr)
+						 || (strstr(pContent_Type, "application/json") != nullptr)
+						 || (strstr(pContent_Type, "application/xml") != nullptr))
 					{
 						//Raw data
 						req.parameters.insert(std::pair< std::string, std::string >("data", req.content));
@@ -491,7 +488,7 @@ namespace http {
 					flag_done = 1;
 				}
 				// the browser sends blanks as +
-				while (1)
+				while (true)
 				{
 					size_t p = value.find("+");
 					if (p == std::string::npos)
@@ -581,7 +578,7 @@ namespace http {
 				size_t q = 0;
 				size_t p = q;
 				int flag_done = 0;
-				std::string uri = params;
+				const std::string &uri = params;
 				while (!flag_done)
 				{
 					q = uri.find("=", p);
@@ -600,7 +597,7 @@ namespace http {
 						flag_done = 1;
 					}
 					// the browser sends blanks as +
-					while (1)
+					while (true)
 					{
 						size_t p = value.find("+");
 						if (p == std::string::npos)
@@ -620,7 +617,7 @@ namespace http {
 				const char *pContent_Type = request::get_req_header(&req, "Content-Type");
 				if (pContent_Type)
 				{
-					if (strstr(pContent_Type, "multipart/form-data") != NULL)
+					if (strstr(pContent_Type, "multipart/form-data") != nullptr)
 					{
 						std::string szContent = req.content;
 						size_t pos;
@@ -691,8 +688,8 @@ namespace http {
 						//we should have at least one value
 						if (req.parameters.empty())
 							return true;
-					} //if (strstr(pContent_Type, "multipart/form-data") != NULL)
-					else if (strstr(pContent_Type, "application/x-www-form-urlencoded") != NULL)
+					} // if (strstr(pContent_Type, "multipart/form-data") != NULL)
+					else if (strstr(pContent_Type, "application/x-www-form-urlencoded") != nullptr)
 					{
 						std::string params = req.content;
 						std::string name;
@@ -701,7 +698,7 @@ namespace http {
 						size_t q = 0;
 						size_t p = q;
 						int flag_done = 0;
-						std::string uri = params;
+						const std::string &uri = params;
 						while (!flag_done)
 						{
 							q = uri.find("=", p);
@@ -720,7 +717,7 @@ namespace http {
 								flag_done = 1;
 							}
 							// the browser sends blanks as +
-							while (1)
+							while (true)
 							{
 								size_t p = value.find("+");
 								if (p == std::string::npos)
@@ -774,12 +771,11 @@ namespace http {
 					_log.Log(LOG_ERROR, "WebServer PO unknown exception occurred");
 				}
 				std::string attachment;
-				size_t num = rep.headers.size();
-				for (size_t h = 0; h < num; h++)
+				for (const auto &header : rep.headers)
 				{
-					if (boost::iequals(rep.headers[h].name, "Content-Disposition"))
+					if (boost::iequals(header.name, "Content-Disposition"))
 					{
-						attachment = rep.headers[h].value.substr(rep.headers[h].value.find("=") + 1);
+						attachment = header.value.substr(header.value.find("=") + 1);
 						std::size_t last_dot_pos = attachment.find_last_of(".");
 						if (last_dot_pos != std::string::npos)
 						{
@@ -1051,7 +1047,7 @@ namespace http {
 				{
 					//Single IP or Hostname
 					struct addrinfo* addr = nullptr;
-					if (getaddrinfo(network.c_str(), "0", 0, &addr) == 0)
+					if (getaddrinfo(network.c_str(), "0", nullptr, &addr) == 0)
 					{
 						struct sockaddr_in* saddr = (((struct sockaddr_in*)addr->ai_addr));
 						uint8_t* pAddress = nullptr;
@@ -1072,7 +1068,8 @@ namespace http {
 							return;
 						memcpy(&ipnetwork.Network, pAddress, iASize);
 					}
-					else if (inet_pton((!ipnetwork.bIsIPv6) ? AF_INET : AF_INET6, network.c_str(), &ipnetwork.Network) != 1)
+					else if (inet_pton((!ipnetwork.bIsIPv6) ? AF_INET : AF_INET6, network.c_str(), &ipnetwork.Network)
+						 != 1)
 						return; //invalid address
 					memset((void*)&ipnetwork.Mask, 0xFF, iASize);
 
@@ -1123,13 +1120,9 @@ namespace http {
 		// Check the user's password, return 1 if OK
 		static int check_password(struct ah *ah, const std::string &ha1, const std::string &realm)
 		{
-			if (
-				(ah->nonce.size() == 0) &&
-				(ah->response.size() != 0)
-				)
-			{
+			if ((ah->nonce.size() == 0) && (ah->response.size() != 0))
 				return (ha1 == GenerateMD5Hash(ah->response));
-			}
+
 			return 0;
 		}
 
@@ -1146,12 +1139,11 @@ namespace http {
 		WebEmSession * cWebem::GetSession(const std::string & ssid)
 		{
 			std::unique_lock<std::mutex> lock(m_sessionsMutex);
-			std::map<std::string, WebEmSession>::iterator itt = m_sessions.find(ssid);
+			auto itt = m_sessions.find(ssid);
 			if (itt != m_sessions.end())
-			{
 				return &itt->second;
-			}
-			return NULL;
+
+			return nullptr;
 		}
 
 		void cWebem::AddSession(const WebEmSession & session)
@@ -1168,11 +1160,9 @@ namespace http {
 		void cWebem::RemoveSession(const std::string & ssid)
 		{
 			std::unique_lock<std::mutex> lock(m_sessionsMutex);
-			std::map<std::string, WebEmSession>::iterator itt = m_sessions.find(ssid);
+			auto itt = m_sessions.find(ssid);
 			if (itt != m_sessions.end())
-			{
 				m_sessions.erase(itt);
-			}
 		}
 
 		int cWebem::CountSessions()
@@ -1190,40 +1180,30 @@ namespace http {
 			std::vector<std::string> ssids;
 			{
 				std::unique_lock<std::mutex> lock(m_sessionsMutex);
-				time_t now = mytime(NULL);
-				std::map<std::string, WebEmSession>::iterator itt;
-				for (itt = m_sessions.begin(); itt != m_sessions.end(); ++itt)
-				{
-					if (itt->second.timeout < now)
-					{
-						ssids.push_back(itt->second.id);
-					}
-				}
+				time_t now = mytime(nullptr);
+				for (const auto &session : m_sessions)
+					if (session.second.timeout < now)
+						ssids.push_back(session.second.id);
 			}
-			std::vector<std::string>::iterator ssitt;
-			for (ssitt = ssids.begin(); ssitt != ssids.end(); ++ssitt)
+			for (const auto &ssid : ssids)
 			{
-				std::string ssid = *ssitt;
 				RemoveSession(ssid);
 			}
 			int after = CountSessions();
 			std::stringstream ss;
 			{
 				std::unique_lock<std::mutex> lock(m_sessionsMutex);
-				std::map<std::string, WebEmSession>::iterator itt;
 				int i = 0;
-				for (itt = m_sessions.begin(); itt != m_sessions.end(); ++itt)
+				for (const auto &session : m_sessions)
 				{
 					if (i > 0)
-					{
 						ss << ",";
-					}
-					ss << itt->second.id;
+					ss << session.second.id;
 					i += 1;
 				}
 			}
 			// Clean up expired sessions from database in order to avoid to wait for the domoticz restart (long time running instance)
-			if (mySessionStore != NULL)
+			if (mySessionStore != nullptr)
 			{
 				this->mySessionStore->CleanSessions();
 			}
@@ -1237,7 +1217,7 @@ namespace http {
 		{
 			const char *auth_header;
 
-			if ((auth_header = request::get_req_header(&req, "Authorization")) == NULL)
+			if ((auth_header = request::get_req_header(&req, "Authorization")) == nullptr)
 			{
 				return 0;
 			}
@@ -1335,19 +1315,18 @@ namespace http {
 						uname = base64_decode(uname);
 						upass = GenerateMD5Hash(base64_decode(upass));
 
-						std::vector<_tWebUserPassword>::iterator itt;
-						for (itt = myWebem->m_userpasswords.begin(); itt != myWebem->m_userpasswords.end(); ++itt)
+						for (const auto &my : myWebem->m_userpasswords)
 						{
-							if (itt->Username == uname)
+							if (my.Username == uname)
 							{
-								if (itt->Password != upass)
+								if (my.Password != upass)
 								{
 									m_failcounter++;
 									return 0;
 								}
 								session.isnew = true;
-								session.username = itt->Username;
-								session.rights = itt->userrights;
+								session.username = my.Username;
+								session.rights = my.userrights;
 								session.rememberme = false;
 								m_failcounter = 0;
 								return 1;
@@ -1359,20 +1338,19 @@ namespace http {
 				return 0;
 			}
 
-			std::vector<_tWebUserPassword>::iterator itt;
-			for (itt = myWebem->m_userpasswords.begin(); itt != myWebem->m_userpasswords.end(); ++itt)
+			for (const auto &my : myWebem->m_userpasswords)
 			{
-				if (itt->Username == _ah.user)
+				if (my.Username == _ah.user)
 				{
-					int bOK = check_password(&_ah, itt->Password, myWebem->m_DigistRealm);
+					int bOK = check_password(&_ah, my.Password, myWebem->m_DigistRealm);
 					if (!bOK)
 					{
 						m_failcounter++;
 						return 0;
 					}
 					session.isnew = true;
-					session.username = itt->Username;
-					session.rights = itt->userrights;
+					session.username = my.Username;
+					session.rights = my.userrights;
 					session.rememberme = false;
 					m_failcounter = 0;
 					return 1;
@@ -1390,16 +1368,12 @@ namespace http {
 
 			uint8_t IP[16] = { 0 };
 			if (inet_pton((!bIsIPv6) ? AF_INET : AF_INET6, ip.c_str(), &IP) != 1)
-				return 1;
+				return true;
 
 			int iASize = (!bIsIPv6) ? 4 : 16;
 			for (int ii = 0; ii < iASize; ii++)
-			{
 				if (ipnetwork.Network[ii] != (IP[ii] & ipnetwork.Mask[ii]))
-				{
 					return false;
-				}
-			}
 
 			return true;
 		}
@@ -1413,14 +1387,8 @@ namespace http {
 			if (sHost.size() < 3)
 				return false;
 
-			for (const auto& itt : myWebem->m_localnetworks)
-			{
-				if (IsIPInRange(sHost, itt))
-				{
-					return true;
-				}
-			}
-			return false;
+			return std::any_of(myWebem->m_localnetworks.begin(), myWebem->m_localnetworks.end(),
+					   [&](const _tIPNetwork &my) { return IsIPInRange(sHost, my); });
 		}
 
 		const char * months[12] = {
@@ -1438,7 +1406,7 @@ namespace http {
 #ifdef _WIN32
 			if (gmtime_r(&rawtime, &gmt)) //windows returns errno_t, which returns zero when successful
 #else
-			if (gmtime_r(&rawtime, &gmt) == NULL)
+			if (gmtime_r(&rawtime, &gmt) == nullptr)
 #endif
 			{
 				strcpy(buffer, "Thu, 1 Jan 1970 00:00:00 GMT");
@@ -1490,7 +1458,7 @@ namespace http {
 			_log.Debug(DEBUG_WEBSERVER, "[web:%s] generate new authentication token %s", myWebem->GetPort().c_str(), authToken.c_str());
 
 			session_store_impl_ptr sstore = myWebem->GetSessionStore();
-			if (sstore != NULL)
+			if (sstore != nullptr)
 			{
 				WebEmStoredSession storedSession;
 				storedSession.id = session.id;
@@ -1547,10 +1515,10 @@ namespace http {
 
 			const char *encoding_header;
 			//check gzip support if yes, send it back in gzip format
-			if ((encoding_header = request::get_req_header(&req, "Accept-Encoding")) != NULL)
+			if ((encoding_header = request::get_req_header(&req, "Accept-Encoding")) != nullptr)
 			{
 				//see if we support gzip
-				bool bHaveGZipSupport = (strstr(encoding_header, "gzip") != NULL);
+				bool bHaveGZipSupport = (strstr(encoding_header, "gzip") != nullptr);
 				if (bHaveGZipSupport)
 				{
 					CA2GZIP gzip((char*)rep.content.c_str(), (int)rep.content.size());
@@ -1635,7 +1603,7 @@ namespace http {
 			}
 			h = request::get_req_header(&req, "Host");
 			// request MUST include a host header, even if we don't check it
-			if (h == NULL)
+			if (h == nullptr)
 			{
 				rep = reply::stock_reply(reply::forbidden);
 				return true;
@@ -1643,14 +1611,14 @@ namespace http {
 			h = request::get_req_header(&req, "Origin");
 			// request MUST include an origin header, even if we don't check it
 			// we only "allow" connections from browser clients
-			if (h == NULL)
+			if (h == nullptr)
 			{
 				rep = reply::stock_reply(reply::forbidden);
 				return true;
 			}
 			h = request::get_req_header(&req, "Sec-Websocket-Version");
 			// request MUST include a version number
-			if (h == NULL)
+			if (h == nullptr)
 			{
 				rep = reply::stock_reply(reply::internal_server_error);
 				return true;
@@ -1676,7 +1644,7 @@ namespace http {
 			}
 			h = request::get_req_header(&req, "Sec-Websocket-Key");
 			// request MUST include a sec-websocket-key header and we need to respond to it
-			if (h == NULL)
+			if (h == nullptr)
 			{
 				rep = reply::stock_reply(reply::internal_server_error);
 				return true;
@@ -1744,7 +1712,7 @@ namespace http {
 
 			//Check cookie if still valid
 			const char* cookie_header = request::get_req_header(&req, "Cookie");
-			if (cookie_header != NULL)
+			if (cookie_header != nullptr)
 			{
 				std::string sSID;
 				std::string sAuthToken;
@@ -1766,7 +1734,7 @@ namespace http {
 				}
 				size_t upos = scookie.find("_", fpos);
 				size_t ppos = scookie.find(".", upos);
-				time_t now = mytime(NULL);
+				time_t now = mytime(nullptr);
 				if ((fpos != std::string::npos) && (upos != std::string::npos) && (ppos != std::string::npos))
 				{
 					sSID = scookie.substr(fpos + 7, upos - fpos - 7);
@@ -1786,7 +1754,7 @@ namespace http {
 					if (!sSID.empty())
 					{
 						WebEmSession* oldSession = myWebem->GetSession(sSID);
-						if (oldSession == NULL)
+						if (oldSession == nullptr)
 						{
 							session.id = sSID;
 							session.auth_token = sAuthToken;
@@ -1806,7 +1774,7 @@ namespace http {
 				if (!(sSID.empty() || sAuthToken.empty() || szTime.empty()))
 				{
 					WebEmSession* oldSession = myWebem->GetSession(sSID);
-					if ((oldSession != NULL) && (oldSession->expires < now))
+					if ((oldSession != nullptr) && (oldSession->expires < now))
 					{
 						// Check if session stored in memory is not expired (prevent from spoofing expiration time)
 						expired = true;
@@ -1815,7 +1783,7 @@ namespace http {
 					{
 						//expired session, remove session
 						m_failcounter = 0;
-						if (oldSession != NULL)
+						if (oldSession != nullptr)
 						{
 							// session exists (delete it from memory and database)
 							myWebem->RemoveSession(sSID);
@@ -1824,7 +1792,7 @@ namespace http {
 						send_authorization_request(rep);
 						return false;
 					}
-					if (oldSession != NULL)
+					if (oldSession != nullptr)
 					{
 						// session already exists
 						session = *oldSession;
@@ -1852,23 +1820,16 @@ namespace http {
 					if (myWebem->m_authmethod != AUTH_BASIC)
 					{
 						//Check if we need to bypass authentication (not when using basic-auth)
-						for (const auto& itt : myWebem->myWhitelistURLs)
-						{
-							if (req.uri.find(itt) == 0)
-							{
+						for (const auto &url : myWebem->myWhitelistURLs)
+							if (req.uri.find(url) == 0)
 								return true;
-							}
-						}
 
 						std::string cmdparam;
 						if (GetURICommandParameter(req.uri, cmdparam))
-						{
-							for (const auto& itt : myWebem->myWhitelistCommands)
-							{
-								if (cmdparam.find(itt) == 0)
+							for (const auto &cmd : myWebem->myWhitelistCommands)
+								if (cmdparam.find(cmd) == 0)
 									return true;
-							}
-						}
+
 						// Force login form
 						send_authorization_request(rep);
 						return false;
@@ -1887,9 +1848,7 @@ namespace http {
 			{
 				//Check first if we have a basic auth
 				if (authorize(session, req, rep))
-				{
 					return true;
-				}
 			}
 
 			if (myWebem->m_authmethod == AUTH_BASIC)
@@ -1913,23 +1872,16 @@ namespace http {
 			}
 
 			//Check if we need to bypass authentication (not when using basic-auth)
-			for (const auto& itt : myWebem->myWhitelistURLs)
-			{
-				if (req.uri.find(itt) == 0)
-				{
+			for (const auto &url : myWebem->myWhitelistURLs)
+				if (req.uri.find(url) == 0)
 					return true;
-				}
-			}
+
 			std::string cmdparam;
 			if (GetURICommandParameter(req.uri, cmdparam))
 			{
-				for (const auto& itt : myWebem->myWhitelistCommands)
-				{
-					if (cmdparam.find(itt) == 0)
-					{
+				for (const auto &cmd : myWebem->myWhitelistCommands)
+					if (cmdparam.find(cmd) == 0)
 						return true;
-					}
-				}
 			}
 
 			send_authorization_request(rep);
@@ -1942,7 +1894,7 @@ namespace http {
 		bool cWebemRequestHandler::checkAuthToken(WebEmSession & session)
 		{
 			session_store_impl_ptr sstore = myWebem->GetSessionStore();
-			if (sstore == NULL)
+			if (sstore == nullptr)
 			{
 				_log.Log(LOG_ERROR, "CheckAuthToken([%s_%s]) : no store defined", session.id.c_str(), session.auth_token.c_str());
 				return true;
@@ -1972,7 +1924,7 @@ namespace http {
 			{
 				// we are already admin - restore session from db
 				session.expires = storedSession.expires;
-				time_t now = mytime(NULL);
+				time_t now = mytime(nullptr);
 				if (session.expires < now)
 				{
 					removeAuthToken(session.id);
@@ -1993,18 +1945,17 @@ namespace http {
 				bool sessionExpires = false;
 				session.username = storedSession.username;
 				session.expires = storedSession.expires;
-				std::vector<_tWebUserPassword>::iterator ittu;
-				for (ittu = myWebem->m_userpasswords.begin(); ittu != myWebem->m_userpasswords.end(); ++ittu)
+				for (const auto &my : myWebem->m_userpasswords)
 				{
-					if (ittu->Username == session.username) // the user still exists
+					if (my.Username == session.username) // the user still exists
 					{
 						userExists = true;
-						session.rights = ittu->userrights;
+						session.rights = my.userrights;
 						break;
 					}
 				}
 
-				time_t now = mytime(NULL);
+				time_t now = mytime(nullptr);
 				sessionExpires = session.expires < now;
 
 				if (!userExists || sessionExpires)
@@ -2015,7 +1966,7 @@ namespace http {
 				}
 
 				WebEmSession* oldSession = myWebem->GetSession(session.id);
-				if (oldSession == NULL)
+				if (oldSession == nullptr)
 				{
 					_log.Debug(DEBUG_WEBSERVER, "[web:%s] CheckAuthToken(%s_%s_%s) : restore session", myWebem->GetPort().c_str(), session.id.c_str(), session.auth_token.c_str(), session.username.c_str());
 					myWebem->AddSession(session);
@@ -2028,7 +1979,7 @@ namespace http {
 		void cWebemRequestHandler::removeAuthToken(const std::string & sessionId)
 		{
 			session_store_impl_ptr sstore = myWebem->GetSessionStore();
-			if (sstore != NULL)
+			if (sstore != nullptr)
 			{
 				sstore->RemoveSession(sessionId);
 			}
@@ -2053,14 +2004,14 @@ namespace http {
 
 			if (myWebem->myRemoteProxyIPs.size() > 0)
 			{
-				for (std::vector<std::string>::size_type i = 0; i < myWebem->myRemoteProxyIPs.size(); ++i)
+				for (auto &myRemoteProxyIP : myWebem->myRemoteProxyIPs)
 				{
-					if (session.remote_host == myWebem->myRemoteProxyIPs[i])
+					if (session.remote_host == myRemoteProxyIP)
 					{
 						const char *host_header = request::get_req_header(&req, "X-Forwarded-For");
-						if (host_header != NULL)
+						if (host_header != nullptr)
 						{
-							if (strstr(host_header, ",") != NULL)
+							if (strstr(host_header, ",") != nullptr)
 							{
 								//Multiple proxies are used... this is not very common
 								host_header = request::get_req_header(&req, "X-Real-IP"); //try our NGINX header
@@ -2112,7 +2063,7 @@ namespace http {
 				//Remove session id based on cookie
 				const char *cookie;
 				cookie = request::get_req_header(&req, "Cookie");
-				if (cookie != NULL)
+				if (cookie != nullptr)
 				{
 					std::string scookie = cookie;
 					size_t fpos = scookie.find("DMZSID=");
@@ -2121,7 +2072,7 @@ namespace http {
 					{
 						std::string sSID = scookie.substr(fpos + 7, upos - fpos - 7);
 						_log.Debug(DEBUG_WEBSERVER, "Web: Logout : remove session %s", sSID.c_str());
-						std::map<std::string, WebEmSession>::iterator itt = myWebem->m_sessions.find(sSID);
+						auto itt = myWebem->m_sessions.find(sSID);
 						if (itt != myWebem->m_sessions.end())
 						{
 							myWebem->m_sessions.erase(itt);
@@ -2170,7 +2121,7 @@ namespace http {
 						rep.status = reply::ok;
 						rep.content = requestCopy.uri;
 						reply::add_header(&rep, "Content-Length", std::to_string(rep.content.size()));
-						reply::add_header(&rep, "Last-Modified", make_web_time(mytime(NULL)), true);
+						reply::add_header(&rep, "Last-Modified", make_web_time(mytime(nullptr)), true);
 						reply::add_header(&rep, "Content-Type", "application/json;charset=UTF-8");
 						return;
 					}
@@ -2229,11 +2180,11 @@ namespace http {
 
 					// find content type header
 					std::string content_type;
-					for (unsigned int h = 0; h < rep.headers.size(); h++)
+					for (auto &header : rep.headers)
 					{
-						if (boost::iequals(rep.headers[h].name, "Content-Type"))
+						if (boost::iequals(header.name, "Content-Type"))
 						{
-							content_type = rep.headers[h].value;
+							content_type = header.value;
 							break;
 						}
 					}
@@ -2267,7 +2218,8 @@ namespace http {
 
 							if (!mInfo.mtime_support)
 							{
-								reply::add_header(&rep, "Last-Modified", make_web_time(mytime(NULL)), true);
+								reply::add_header(&rep, "Last-Modified", make_web_time(mytime(nullptr)),
+										  true);
 							}
 
 							//check gzip support if yes, send it back in gzip format
@@ -2286,7 +2238,8 @@ namespace http {
 					else if (content_type.find("image/") != std::string::npos)
 					{
 						//Cache images
-						reply::add_header(&rep, "Expires", make_web_time(mytime(NULL) + 3600 * 24 * 365)); // one year
+						reply::add_header(&rep, "Expires",
+								  make_web_time(mytime(nullptr) + 3600 * 24 * 365)); // one year
 					}
 					else
 					{
@@ -2297,7 +2250,7 @@ namespace http {
 			}
 
 			// Set timeout to make session in use
-			session.timeout = mytime(NULL) + SHORT_SESSION_TIMEOUT;
+			session.timeout = mytime(nullptr) + SHORT_SESSION_TIMEOUT;
 
 			if ((session.isnew == true) &&
 				(session.rights == 2) &&
@@ -2307,8 +2260,8 @@ namespace http {
 			{
 				// client is possibly a script that does not send cookies - see if we have the IP address registered as a session ID
 				WebEmSession* memSession = myWebem->GetSession(session.remote_host);
-				time_t now = mytime(NULL);
-				if (memSession != NULL)
+				time_t now = mytime(nullptr);
+				if (memSession != nullptr)
 				{
 					if (memSession->expires < now)
 					{
@@ -2373,9 +2326,9 @@ namespace http {
 			{
 				// Renew session expiration and authentication token
 				WebEmSession* memSession = myWebem->GetSession(session.id);
-				if (memSession != NULL)
+				if (memSession != nullptr)
 				{
-					time_t now = mytime(NULL);
+					time_t now = mytime(nullptr);
 					// Renew session expiration date if half of session duration has been exceeded ("dont remember me" sessions, 10 minutes)
 					if (memSession->expires - (SHORT_SESSION_TIMEOUT / 2) < now)
 					{

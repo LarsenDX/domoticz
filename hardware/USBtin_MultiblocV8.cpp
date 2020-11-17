@@ -225,14 +225,15 @@ void USBtin_MultiblocV8::ManageThreadV8(bool States)
 void USBtin_MultiblocV8::ClearingBlocList(){
 	_log.Log(LOG_NORM,"MultiblocV8: clearing BlocList");
 	//effacement du tableau à l'init
-	for(int i = 0;i < MAX_NUMBER_BLOC;i++){
-		m_BlocList_CAN[i].BlocID = 0;
-		m_BlocList_CAN[i].Status = 0;
-		m_BlocList_CAN[i].NbAliveFrameReceived = 0;
-		m_BlocList_CAN[i].VersionH = 0;
-		m_BlocList_CAN[i].VersionM = 0;
-		m_BlocList_CAN[i].VersionL = 0;
-		m_BlocList_CAN[i].CongifurationCrc = 0;
+	for (auto &i : m_BlocList_CAN)
+	{
+		i.BlocID = 0;
+		i.Status = 0;
+		i.NbAliveFrameReceived = 0;
+		i.VersionH = 0;
+		i.VersionM = 0;
+		i.VersionL = 0;
+		i.CongifurationCrc = 0;
 	}
 }
 
@@ -567,8 +568,9 @@ void USBtin_MultiblocV8::Traitement_Trame_EtatBloc(const unsigned char RefBloc, 
 			for(i = 0;i < (BLOC_STATES_CLEARING+1); i++){
 				result = m_sql.safe_query("UPDATE DeviceStatus SET nValue=%d WHERE (HardwareID==%d) AND (DeviceID=='%q') AND (Type==%d) AND (Subtype==%d) AND (Unit==%d)",
 					0, m_HwdID, szDeviceID,pTypeLighting2,sTypeAC, i);
-				/*result = m_sql.safe_query("SELECT ID,nValue,sValue FROM DeviceStatus WHERE (HardwareID==%d) AND (DeviceID=='%q') AND (Type==%d) AND (Subtype==%d) AND (Unit==%d)",
-				m_HwdID, szDeviceID,pTypeLighting2,sTypeAC, i);
+				/*result = m_sql.safe_query("SELECT ID,nValue,sValue FROM DeviceStatus WHERE (HardwareID==%d) AND
+				(DeviceID=='%q') AND (Type==%d) AND (Subtype==%d) AND (Unit==%d)", m_HwdID,
+				szDeviceID,pTypeLighting2,sTypeAC, i);
 				//if(!result.empty() ){ //if command exist in db :
 					//Refresh it !
 					tRBUF lcmd;
@@ -585,7 +587,7 @@ void USBtin_MultiblocV8::Traitement_Trame_EtatBloc(const unsigned char RefBloc, 
 					lcmd.LIGHTING2.level = 0; //level_value;
 					lcmd.LIGHTING2.filler = 2;
 					lcmd.LIGHTING2.rssi = 12;
-					sDecodeRXMessage(this, (const unsigned char *)&lcmd.LIGHTING2, NULL, 255);
+					sDecodeRXMessage(this, (const unsigned char *)&lcmd.LIGHTING2, nullptr, 255);
 
 				}*/
 			}
@@ -642,7 +644,8 @@ bool USBtin_MultiblocV8::CheckOutputChange(unsigned long sID,int OutputNumber,bo
 				//_log.Log(LOG_NORM,"MultiblocV8: Output 1 slevel : %d ",slevel);
 				//level check only if cde and states = 1
 				if( CdeReceive && (nvalue > 0) ){
-					if( (slevel == LevelReceive) ) returnvalue = false;
+					if (slevel == LevelReceive)
+						returnvalue = false;
 				}
 			}
 		}

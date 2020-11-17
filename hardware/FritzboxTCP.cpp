@@ -44,10 +44,6 @@ FritzboxTCP::FritzboxTCP(const int ID, const std::string &IPAddress, const unsig
 	m_bufferpos = 0;
 }
 
-FritzboxTCP::~FritzboxTCP(void)
-{
-}
-
 bool FritzboxTCP::StartHardware()
 {
 	RequestStart();
@@ -97,7 +93,7 @@ void FritzboxTCP::Do_Work()
 		sec_counter++;
 
 		if (sec_counter  % 12 == 0) {
-			m_LastHeartbeat = mytime(NULL);
+			m_LastHeartbeat = mytime(nullptr);
 		}
 	}
 	terminate();

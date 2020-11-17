@@ -33,10 +33,6 @@ m_Password(Password)
 	Init();
 }
 
-CICYThermostat::~CICYThermostat(void)
-{
-}
-
 void CICYThermostat::Init()
 {
 	m_SerialNumber="";
@@ -79,7 +75,7 @@ void CICYThermostat::Do_Work()
 		sec_counter++;
 		if (sec_counter % 12 == 0)
 		{
-			m_LastHeartbeat = mytime(NULL);
+			m_LastHeartbeat = mytime(nullptr);
 		}
 		if (sec_counter % ICY_POLL_INTERVAL ==0)
 		{

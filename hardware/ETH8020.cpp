@@ -22,10 +22,6 @@ m_Password(CURLEncode::URLEncode(password))
 	Init();
 }
 
-CETH8020::~CETH8020(void)
-{
-}
-
 void CETH8020::Init()
 {
 }
@@ -65,7 +61,7 @@ void CETH8020::Do_Work()
 		sec_counter++;
 
 		if (sec_counter % 12 == 0) {
-			m_LastHeartbeat=mytime(NULL);
+			m_LastHeartbeat = mytime(nullptr);
 		}
 
 		if (sec_counter % ETH8020_POLL_INTERVAL == 0)

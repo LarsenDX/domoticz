@@ -11,9 +11,7 @@ CNotificationPushover::CNotificationPushover() : CNotificationBase(std::string("
 	SetupConfig(std::string("PushoverUser"), _apiuser);
 }
 
-CNotificationPushover::~CNotificationPushover()
-{
-}
+CNotificationPushover::~CNotificationPushover() = default;
 
 bool CNotificationPushover::SendMessageImplementation(
 	const uint64_t Idx,
@@ -76,9 +74,9 @@ bool CNotificationPushover::SendMessageImplementation(
 		int iStatus = root["status"].asInt();
 		if (iStatus != 0)
 			return true;
-		for (const auto& itt : root["errors"])
+		for (const auto &error : root["errors"])
 		{
-			_log.Log(LOG_ERROR, "Pushover: Error, %s", itt.asString().c_str());
+			_log.Log(LOG_ERROR, "Pushover: Error, %s", error.asString().c_str());
 		}
 	}
 	_log.Log(LOG_ERROR, "Pushover: Invalid response received!");

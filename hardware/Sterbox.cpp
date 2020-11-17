@@ -24,10 +24,6 @@ m_Password(password)
 	Init();
 }
 
-CSterbox::~CSterbox(void)
-{
-}
-
 void CSterbox::Init()
 {
 }
@@ -67,7 +63,7 @@ void CSterbox::Do_Work()
 		sec_counter++;
 
 		if (sec_counter % 12 == 0) {
-			m_LastHeartbeat=mytime(NULL);
+			m_LastHeartbeat = mytime(nullptr);
 		}
 
 		if (sec_counter % STERBOX_POLL_INTERVAL == 0)
